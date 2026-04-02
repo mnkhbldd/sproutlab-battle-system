@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battle System — Sprout Lab Gamification</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: #2a3349;
+    --accent: #6c63ff;
+    --accent2: #ff6b6b;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8eaf0;
+    --muted: #7b869a;
+    --fire: #ff6b35;
+    --water: #4ecdc4;
+    --earth: #95e06c;
+    --air: #a8edea;
+    --light: #ffd93d;
+    --dark: #c77dff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    padding: 60px 24px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, #1a0a3e 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, #0a1f3e 0%, transparent 70%),
+      var(--bg);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(108,99,255,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,107,107,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.4);
+    color: #a89fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 32px;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 88px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #fff 30%, #a89fff 70%, #ff6b6b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 20px;
+    color: var(--muted);
+    max-width: 560px;
+    margin-bottom: 48px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .hero-stat .num {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-stat .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section {
+    padding: 100px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  h2 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    color: #fff;
+  }
+
+  .subtitle {
+    font-size: 17px;
+    color: var(--muted);
+    margin-bottom: 56px;
+    max-width: 600px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  .card-grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card-grid-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    overflow-x: auto;
+  }
+
+  .arch-layer {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .arch-layer-label {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--surface);
+    padding: 2px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+  }
+
+  .arch-frontend { border-color: rgba(108,99,255,0.5); }
+  .arch-frontend .arch-layer-label { color: var(--accent); }
+
+  .arch-backend { border-color: rgba(67,233,123,0.4); }
+  .arch-backend .arch-layer-label { color: var(--accent3); }
+
+  .arch-db { border-color: rgba(247,151,30,0.4); }
+  .arch-db .arch-layer-label { color: var(--accent4); }
+
+  .arch-routes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .arch-route {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-family: 'Consolas', 'Cascadia Code', monospace;
+    color: var(--accent);
+  }
+
+  .arch-services {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .arch-service {
+    background: var(--surface2);
+    border: 1px solid rgba(67,233,123,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-family: 'Consolas', 'Cascadia Code', monospace;
+    color: var(--accent3);
+  }
+
+  .arch-connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--muted);
+    font-size: 13px;
+    gap: 8px;
+    margin: 4px 0;
+  }
+
+  .arch-connector::before,
+  .arch-connector::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    max-width: 120px;
+  }
+
+  /* ── CHARACTERS ── */
+  .char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+  }
+
+  .char-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .char-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    border-radius: 16px;
+  }
+
+  .char-card:hover { transform: translateY(-4px); }
+
+  .char-card.fire  { border-color: rgba(255,107,53,0.5);  }
+  .char-card.fire::before  { background: var(--fire); }
+  .char-card.water { border-color: rgba(78,205,196,0.5); }
+  .char-card.water::before { background: var(--water); }
+  .char-card.earth { border-color: rgba(149,224,108,0.5); }
+  .char-card.earth::before { background: var(--earth); }
+  .char-card.air   { border-color: rgba(168,237,234,0.5); }
+  .char-card.air::before   { background: var(--air); }
+  .char-card.light { border-color: rgba(255,217,61,0.5);  }
+  .char-card.light::before { background: var(--light); }
+  .char-card.dark  { border-color: rgba(199,125,255,0.5); }
+  .char-card.dark::before  { background: var(--dark); }
+
+  .char-emoji { font-size: 44px; margin-bottom: 12px; display: block; }
+
+  .char-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .char-type {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .char-card.fire  .char-type { color: var(--fire); }
+  .char-card.water .char-type { color: var(--water); }
+  .char-card.earth .char-type { color: var(--earth); }
+  .char-card.air   .char-type { color: var(--air); }
+  .char-card.light .char-type { color: var(--light); }
+  .char-card.dark  .char-type { color: var(--dark); }
+
+  .char-stats {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .char-stat {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .char-stat .val { font-weight: 700; color: #fff; }
+  .char-stat .key { color: var(--muted); font-size: 10px; display: block; }
+
+  /* ── BATTLE RPS ── */
+  .rps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .action-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 20px;
+    text-align: center;
+  }
+
+  .action-card.attack  { border-color: rgba(255,107,107,0.5); }
+  .action-card.block   { border-color: rgba(108,99,255,0.5);  }
+  .action-card.weak    { border-color: rgba(247,151,30,0.5);  }
+
+  .action-emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+  .action-name  { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .action-desc  { font-size: 13px; color: var(--muted); }
+
+  .action-card.attack .action-name  { color: var(--accent2); }
+  .action-card.block  .action-name  { color: var(--accent); }
+  .action-card.weak   .action-name  { color: var(--accent4); }
+
+  .rps-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .rps-table th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rps-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(42,51,73,0.5);
+    vertical-align: middle;
+  }
+
+  .rps-table tr:last-child td { border-bottom: none; }
+
+  .rps-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-win  { background: rgba(67,233,123,0.15); color: var(--accent3); border: 1px solid rgba(67,233,123,0.3); }
+  .badge-lose { background: rgba(255,107,107,0.15); color: var(--accent2); border: 1px solid rgba(255,107,107,0.3); }
+  .badge-draw { background: rgba(108,99,255,0.15); color: var(--accent); border: 1px solid rgba(108,99,255,0.3); }
+  .badge-crit { background: rgba(247,151,30,0.15); color: var(--accent4); border: 1px solid rgba(247,151,30,0.3); }
+
+  /* ── BATTLE FLOW ── */
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 44px;
+    bottom: -20px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .flow-num {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    position: relative;
+    z-index: 1;
+  }
+
+  .flow-content {
+    padding: 8px 0 32px;
+    flex: 1;
+  }
+
+  .flow-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .flow-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .flow-tag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-family: monospace;
+    color: var(--accent3);
+    margin: 4px 4px 0 0;
+  }
+
+  /* ── DB SCHEMA ── */
+  .schema-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .schema-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .schema-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .schema-name {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: monospace;
+    color: #fff;
+  }
+
+  .schema-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .schema-fields {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .schema-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .field-name {
+    font-family: monospace;
+    color: #a8d8ff;
+    flex-shrink: 0;
+    min-width: 160px;
+  }
+
+  .field-type {
+    font-family: monospace;
+    color: var(--accent4);
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .field-note {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .field-pk {
+    background: rgba(108,99,255,0.2);
+    color: var(--accent);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .field-fk {
+    background: rgba(247,151,30,0.2);
+    color: var(--accent4);
+    border: 1px solid rgba(247,151,30,0.3);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .field-uniq {
+    background: rgba(67,233,123,0.2);
+    color: var(--accent3);
+    border: 1px solid rgba(67,233,123,0.3);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ── CHALLENGES ── */
+  .challenge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .challenge-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .challenge-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .challenge-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .challenge-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .solution-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent3);
+    margin-bottom: 6px;
+  }
+
+  .solution-text {
+    font-size: 13px;
+    color: #b0c4de;
+    line-height: 1.6;
+  }
+
+  /* ── SHOP ITEMS ── */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .shop-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .shop-emoji { font-size: 36px; display: block; margin-bottom: 10px; }
+  .shop-name  { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .shop-effect { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .shop-currency {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(108,99,255,0.1);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ── PHASES ── */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    counter-reset: phase;
+  }
+
+  .phase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    counter-increment: phase;
+  }
+
+  .phase-card::before {
+    content: 'Phase ' counter(phase);
+    position: absolute;
+    top: -12px;
+    left: 16px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 12px;
+    border-radius: 100px;
+  }
+
+  .phase-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 14px;
+    margin-top: 8px;
+  }
+
+  .phase-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .phase-items li {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .phase-items li::before {
+    content: '→';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── CURRENCY ── */
+  .currency-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .currency-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .currency-card.xp    { border: 1px solid rgba(67,233,123,0.4); }
+  .currency-card.points { border: 1px solid rgba(108,99,255,0.4); }
+
+  .currency-emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+  .currency-name {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .currency-card.xp     .currency-name { color: var(--accent3); }
+  .currency-card.points .currency-name { color: var(--accent); }
+
+  .currency-desc { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+
+  .currency-rule {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    font-family: 'Consolas', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-x: auto;
+    color: #cdd6f4;
+  }
+
+  .code-block .c  { color: var(--muted); }
+  .code-block .kw { color: #cba6f7; }
+  .code-block .str { color: var(--accent3); }
+  .code-block .num { color: var(--accent4); }
+  .code-block .fn { color: #89b4fa; }
+  .code-block .type { color: #fab387; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 60px;
+    background: rgba(13,15,20,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(42,51,73,0.6);
+  }
+
+  .nav-logo {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    display: block;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .nav-links a:hover {
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .rps-grid { grid-template-columns: 1fr; }
+    .currency-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Sprout<span>Lab</span> Battle</div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#characters">Characters</a></li>
+    <li><a href="#battle">Battle Engine</a></li>
+    <li><a href="#database">Database</a></li>
+    <li><a href="#shop">Shop</a></li>
+    <li><a href="#phases">Phases</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero" style="padding-top: 100px;">
+  <div class="hero-badge">⚔️ Architecture Plan · 2026</div>
+  <h1>Battle System</h1>
+  <p>A turn-based, asynchronous gamification engine for Sprout Lab — Dragon City style, built for students.</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="num">6</span>
+      <span class="label">Characters</span>
+    </div>
+    <div class="hero-stat">
+      <span class="num">3</span>
+      <span class="label">Squad Size</span>
+    </div>
+    <div class="hero-stat">
+      <span class="num">10</span>
+      <span class="label">Max Turns</span>
+    </div>
+    <div class="hero-stat">
+      <span class="num">9</span>
+      <span class="label">New DB Tables</span>
+    </div>
+    <div class="hero-stat">
+      <span class="num">5</span>
+      <span class="label">Phases</span>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="section-label">Architecture</div>
+  <h2>System Overview</h2>
+  <p class="subtitle">Slots into the existing Cloudflare Workers + GraphQL + D1 stack — zero new infrastructure required.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer arch-frontend">
+      <span class="arch-layer-label">Student Web App — sprout-lab-web (Next.js 14)</span>
+      <div class="arch-routes">
+        <span class="arch-route">/characters</span>
+        <span class="arch-route">/egg</span>
+        <span class="arch-route">/squad</span>
+        <span class="arch-route">/battle</span>
+        <span class="arch-route">/battle/[id]</span>
+        <span class="arch-route">/shop</span>
+      </div>
+    </div>
+
+    <div class="arch-connector">Apollo Client (JWT Bearer) · GraphQL over HTTP</div>
+
+    <div class="arch-layer arch-backend">
+      <span class="arch-layer-label">sprout-lab-service — Cloudflare Workers + Apollo Server</span>
+      <div class="arch-services">
+        <span class="arch-service">BattleEngineService</span>
+        <span class="arch-service">ActionResolverService</span>
+        <span class="arch-service">AiOpponentService</span>
+        <span class="arch-service">CharacterStatsService</span>
+        <span class="arch-service">EggService</span>
+        <span class="arch-service">SquadService</span>
+        <span class="arch-service">UserHealthService</span>
+      </div>
+    </div>
+
+    <div class="arch-connector">Drizzle ORM · SQLite dialect</div>
+
+    <div class="arch-layer arch-db">
+      <span class="arch-layer-label">Cloudflare D1 (SQLite) + KV</span>
+      <div class="arch-routes">
+        <span class="arch-route" style="color: var(--accent4);">character</span>
+        <span class="arch-route" style="color: var(--accent4);">user_character</span>
+        <span class="arch-route" style="color: var(--accent4);">user_squad</span>
+        <span class="arch-route" style="color: var(--accent4);">character_egg</span>
+        <span class="arch-route" style="color: var(--accent4);">user_health</span>
+        <span class="arch-route" style="color: var(--accent4);">user_xp</span>
+        <span class="arch-route" style="color: var(--accent4);">battle</span>
+        <span class="arch-route" style="color: var(--accent4);">battle_turn</span>
+        <span class="arch-route" style="color: var(--accent4);">BATTLE_LOCK (KV)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CHARACTERS -->
+<section id="characters">
+  <div class="section-label">Character System</div>
+  <h2>6 Unique Characters</h2>
+  <p class="subtitle">Each character has a type, base stats, and scales with level. Obtained through the egg system — no duplicates allowed per student.</p>
+
+  <div class="char-grid">
+    <div class="char-card fire">
+      <span class="char-emoji">🔥</span>
+      <div class="char-name">Emberlord</div>
+      <div class="char-type">Fire</div>
+      <div class="char-stats">
+        <div class="char-stat"><span class="val">500</span><span class="key">HP</span></div>
+        <div class="char-stat"><span class="val">100</span><span class="key">DMG</span></div>
+      </div>
+    </div>
+    <div class="char-card water">
+      <span class="char-emoji">🌊</span>
+      <div class="char-name">Tidecaller</div>
+      <div class="char-type">Water</div>
+      <div class="char-stats">
+        <div class="char-stat"><span class="val">600</span><span class="key">HP</span></div>
+        <div class="char-stat"><span class="val">75</span><span class="key">DMG</span></div>
+      </div>
+    </div>
+    <div class="char-card earth">
+      <span class="char-emoji">🌿</span>
+      <div class="char-name">Stoneguard</div>
+      <div class="char-type">Earth</div>
+      <div class="char-stats">
+        <div class="char-stat"><span class="val">700</span><span class="key">HP</span></div>
+        <div class="char-stat"><span class="val">65</span><span class="key">DMG</span></div>
+      </div>
+    </div>
+    <div class="char-card air">
+      <span class="char-emoji">🌪️</span>
+      <div class="char-name">Zephyrite</div>
+      <div class="char-type">Air</div>
+      <div class="char-stats">
+        <div class="char-stat"><span class="val">450</span><span class="key">HP</span></div>
+        <div class="char-stat"><span class="val">90</span><span class="key">DMG</span></div>
+      </div>
+    </div>
+    <div class="char-card light">
+      <span class="char-emoji">✨</span>
+      <div class="char-name">Lumiveil</div>
+      <div class="char-type">Light</div>
+      <div class="char-stats">
+        <div class="char-stat"><span class="val">550</span><span class="key">HP</span></div>
+        <div class="char-stat"><span class="val">80</span><span class="key">DMG</span></div>
+      </div>
+    </div>
+    <div class="char-card dark">
+      <span class="char-emoji">🌑</span>
+      <div class="char-name">Voidmancer</div>
+      <div class="char-type">Dark</div>
+      <div class="char-stats">
+        <div class="char-stat"><span class="val">480</span><span class="key">HP</span></div>
+        <div class="char-stat"><span class="val">110</span><span class="key">DMG</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 32px;" class="card">
+    <div style="display:flex; gap:48px; flex-wrap:wrap;">
+      <div>
+        <div class="section-label" style="margin-bottom:12px;">Stat Scaling Formula</div>
+        <div class="code-block" style="font-size:12px;">
+<span class="kw">HP</span>  = baseHp   + (level - 1) × <span class="num">50</span>   <span class="c">// 500 → 950 at lv10</span><br>
+<span class="kw">DMG</span> = baseDmg  + (level - 1) × <span class="num">10</span>   <span class="c">// 100 → 190 at lv10</span>
+        </div>
+      </div>
+      <div>
+        <div class="section-label" style="margin-bottom:12px;">Egg Logic</div>
+        <div class="flow-steps" style="margin-top:0;">
+          <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-content" style="padding-bottom:16px;">
+              <div class="flow-title" style="font-size:14px;">Query owned characters</div>
+              <div class="flow-desc">Get all characterIds already owned by student</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-content" style="padding-bottom:16px;">
+              <div class="flow-title" style="font-size:14px;">Random pick from remainder</div>
+              <div class="flow-desc">Pick randomly from the 6 minus already-owned set</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num" style="border-color:var(--accent3); color:var(--accent3);">✓</div>
+            <div class="flow-content" style="padding-bottom:0;">
+              <div class="flow-title" style="font-size:14px;">Fallback: all 6 owned</div>
+              <div class="flow-desc">Award bonus <strong style="color:var(--accent);">points</strong> instead of a duplicate character</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CURRENCY -->
+<section>
+  <div class="section-label">Currency System</div>
+  <h2>XP vs Points</h2>
+  <p class="subtitle">Two completely separate systems — different tables, different services, never mixed.</p>
+
+  <div class="currency-grid">
+    <div class="currency-card xp">
+      <span class="currency-emoji">⭐</span>
+      <div class="currency-name">XP</div>
+      <div class="currency-desc">Experience points used <strong>only</strong> for character leveling. Never spent, never deducted.</div>
+      <div class="currency-rule">✅ Earn from battles</div>
+      <div class="currency-rule">✅ Determines character level</div>
+      <div class="currency-rule">❌ Cannot be spent in shop</div>
+      <div class="currency-rule" style="margin-top:8px; border:1px solid rgba(67,233,123,0.3); background:rgba(67,233,123,0.06); color:var(--accent3);">Table: <code>user_xp</code></div>
+    </div>
+    <div class="currency-card points">
+      <span class="currency-emoji">💎</span>
+      <div class="currency-name">Points</div>
+      <div class="currency-desc">Spendable currency for the shop. Uses the existing <code>transaction_history</code> ledger.</div>
+      <div class="currency-rule">✅ Earn from battles & quizzes</div>
+      <div class="currency-rule">✅ Spend in the shop</div>
+      <div class="currency-rule">✅ Tracked per-transaction</div>
+      <div class="currency-rule" style="margin-top:8px; border:1px solid rgba(108,99,255,0.3); background:rgba(108,99,255,0.06); color:var(--accent);">Table: <code>transaction_history</code> (existing)</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- BATTLE ENGINE -->
+<section id="battle">
+  <div class="section-label">Battle Engine</div>
+  <h2>Turn-Based Rule Engine</h2>
+  <p class="subtitle">Rock-paper-scissors style resolution with critical hits and a weighted AI opponent. Fully server-side — client just picks an action.</p>
+
+  <div class="rps-grid">
+    <div class="action-card attack">
+      <span class="action-emoji">⚔️</span>
+      <div class="action-name">Attack</div>
+      <div class="action-desc">Full damage. Beats Weak Attack. Loses to Block.</div>
+    </div>
+    <div class="action-card block">
+      <span class="action-emoji">🛡️</span>
+      <div class="action-name">Block</div>
+      <div class="action-desc">Absorbs Attack, deals 30% counter. Loses to Weak Attack.</div>
+    </div>
+    <div class="action-card weak">
+      <span class="action-emoji">💨</span>
+      <div class="action-name">Weak Attack</div>
+      <div class="action-desc">60% damage that bypasses Block. Loses to Attack.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:32px;">
+    <div class="section-label" style="margin-bottom:16px;">Outcome Matrix</div>
+    <table class="rps-table">
+      <thead>
+        <tr>
+          <th>Player Action</th>
+          <th>Opponent Action</th>
+          <th>Result</th>
+          <th>Damage Dealt</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>⚔️ Attack</td>
+          <td>💨 Weak Attack</td>
+          <td><span class="badge badge-win">Win</span></td>
+          <td>100% DMG to opponent</td>
+        </tr>
+        <tr>
+          <td>🛡️ Block</td>
+          <td>⚔️ Attack</td>
+          <td><span class="badge badge-win">Win</span></td>
+          <td>0 taken + 30% counter</td>
+        </tr>
+        <tr>
+          <td>💨 Weak Attack</td>
+          <td>🛡️ Block</td>
+          <td><span class="badge badge-win">Win</span></td>
+          <td>60% bypasses block</td>
+        </tr>
+        <tr>
+          <td>⚔️ Attack</td>
+          <td>⚔️ Attack</td>
+          <td><span class="badge badge-draw">Draw</span></td>
+          <td>Both take 100% DMG</td>
+        </tr>
+        <tr>
+          <td>🛡️ Block</td>
+          <td>🛡️ Block</td>
+          <td><span class="badge badge-draw">Draw</span></td>
+          <td>No damage either side</td>
+        </tr>
+        <tr>
+          <td>⚔️ Attack</td>
+          <td>🛡️ Block</td>
+          <td><span class="badge badge-lose">Lose</span></td>
+          <td>30% counter damage taken</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:8px 16px; color:var(--muted); font-size:12px;">
+            🎲 Critical Hit: 15% chance on player wins → 1.5× damage multiplier <span class="badge badge-crit" style="margin-left:8px;">15% · 1.5×</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-grid card-grid-2">
+    <div class="card">
+      <div class="section-label" style="margin-bottom:16px;">AI Opponent Logic</div>
+      <div class="code-block" style="font-size:12px;">
+<span class="c">// Base weights</span><br>
+ATTACK:      <span class="num">40</span>%<br>
+BLOCK:       <span class="num">30</span>%<br>
+WEAK_ATTACK: <span class="num">30</span>%<br>
+<br>
+<span class="c">// Pattern bias</span><br>
+<span class="kw">if</span> (lastTwo === <span class="str">'ATTACK ATTACK'</span>)<br>
+  BLOCK += <span class="num">30</span>% <span class="c">// counter pattern</span><br>
+<br>
+<span class="c">// Hard cap: no action > 70%</span><br>
+<span class="fn">weightedRandom</span>(weights)
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label" style="margin-bottom:16px;">Battle End Conditions</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-num" style="background:rgba(255,107,107,0.1); border-color:var(--accent2); color:var(--accent2);">✕</div>
+          <div class="flow-content" style="padding-bottom:16px;">
+            <div class="flow-title" style="font-size:14px; color:var(--accent2);">Player HP ≤ 0 → LOSE</div>
+            <div class="flow-desc">Global health reduced. Rewards still granted (consolation XP).</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:rgba(67,233,123,0.1); border-color:var(--accent3); color:var(--accent3);">✓</div>
+          <div class="flow-content" style="padding-bottom:16px;">
+            <div class="flow-title" style="font-size:14px; color:var(--accent3);">Opponent HP ≤ 0 → WIN</div>
+            <div class="flow-desc">Full XP + Points reward. Health only reduced by damage taken.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num" style="background:rgba(108,99,255,0.1);">10</div>
+          <div class="flow-content" style="padding-bottom:0;">
+            <div class="flow-title" style="font-size:14px;">Turn limit → Higher HP wins</div>
+            <div class="flow-desc">Max 10 turns. Compare remaining HP snapshots to determine winner.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 32px; padding: 24px 0;">
+    <div class="section-label" style="margin-bottom:24px;">Battle Flow</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <div class="flow-title">startBattle</div>
+          <div class="flow-desc">Validate squad exists. Pick random opponent (not self). Snapshot both squads' stats. Create battle record. Set KV lock.</div>
+          <span class="flow-tag">BATTLE_LOCK[studentId] = battleId</span>
+          <span class="flow-tag">status: IN_PROGRESS</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <div class="flow-title">submitAction (per turn)</div>
+          <div class="flow-desc">Player picks ATTACK / BLOCK / WEAK_ATTACK. AI picks opponent action. ActionResolver computes damage. Both sides' HP updated.</div>
+          <span class="flow-tag">Max 5 DB ops per turn</span>
+          <span class="flow-tag">Crit roll server-side</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <div class="flow-title">End Condition Check</div>
+          <div class="flow-desc">After each turn: check HP thresholds or turn limit. If ended, apply global health damage and mark battle status.</div>
+          <span class="flow-tag">status: WIN | LOSE | DRAW</span>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="border-color:var(--accent3); color:var(--accent3);">✓</div>
+        <div class="flow-content" style="padding-bottom:0;">
+          <div class="flow-title">claimBattleReward</div>
+          <div class="flow-desc">Write XP to user_xp. Write points to transaction_history. Clear KV lock. Battle is now claimable only once.</div>
+          <span class="flow-tag">XP: user_xp table</span>
+          <span class="flow-tag">Points: transaction_history</span>
+          <span class="flow-tag">KV lock cleared</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 16px; background: rgba(247,151,30,0.05); border-color: rgba(247,151,30,0.3);">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+      <span style="font-size:24px;">🎁</span>
+      <div class="section-label" style="margin-bottom:0;">Reward Config</div>
+    </div>
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div class="currency-rule" style="flex:1; min-width:140px; border-color:rgba(67,233,123,0.3); background:rgba(67,233,123,0.06);">🏆 WIN &nbsp;&nbsp; <strong style="color:var(--accent3);">+100 XP · +50 pts</strong></div>
+      <div class="currency-rule" style="flex:1; min-width:140px; border-color:rgba(255,107,107,0.3); background:rgba(255,107,107,0.06);">💀 LOSE &nbsp; <strong style="color:var(--accent2);">+20 XP &nbsp;· +10 pts</strong></div>
+      <div class="currency-rule" style="flex:1; min-width:140px; border-color:rgba(108,99,255,0.3); background:rgba(108,99,255,0.06);">🤝 DRAW &nbsp; <strong style="color:var(--accent);">+50 XP &nbsp;· +25 pts</strong></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- DATABASE -->
+<section id="database">
+  <div class="section-label">Database Design</div>
+  <h2>Schema Overview</h2>
+  <p class="subtitle">9 new tables on Cloudflare D1 (SQLite). 2 existing tables extended. All IDs are UUID text.</p>
+
+  <div class="card-grid card-grid-2" style="gap:16px;">
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(255,107,53,0.15);">🔥</div>
+        <div>
+          <div class="schema-name">character</div>
+          <div class="schema-desc">Static seed — 6 rows total</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">id</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">name</span><span class="field-type">text</span></div>
+        <div class="schema-field"><span class="field-name">type</span><span class="field-type">text</span><span class="field-note">FIRE|WATER|EARTH…</span></div>
+        <div class="schema-field"><span class="field-name">baseHp</span><span class="field-type">int</span></div>
+        <div class="schema-field"><span class="field-name">baseDamage</span><span class="field-type">int</span></div>
+        <div class="schema-field"><span class="field-name">spriteUrl</span><span class="field-type">text?</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(108,99,255,0.15);">🎴</div>
+        <div>
+          <div class="schema-name">user_character</div>
+          <div class="schema-desc">Owned chars per student</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">id</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">studentId</span><span class="field-type">text</span></div>
+        <div class="schema-field"><span class="field-name">characterId</span><span class="field-type">text</span><span class="field-fk">FK</span></div>
+        <div class="schema-field"><span class="field-name">level</span><span class="field-type">int</span><span class="field-note">1–10</span></div>
+        <div class="schema-field"><span class="field-name">—unique—</span><span class="field-type"></span><span class="field-uniq">studentId+charId</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(247,151,30,0.15);">🥚</div>
+        <div>
+          <div class="schema-name">character_egg</div>
+          <div class="schema-desc">Egg open/pending state</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">id</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">studentId</span><span class="field-type">text</span></div>
+        <div class="schema-field"><span class="field-name">isOpened</span><span class="field-type">bool</span></div>
+        <div class="schema-field"><span class="field-name">awardedCharacterId</span><span class="field-type">text?</span><span class="field-note">null until open</span></div>
+        <div class="schema-field"><span class="field-name">openedAt</span><span class="field-type">timestamp?</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(67,233,123,0.15);">⚔️</div>
+        <div>
+          <div class="schema-name">user_squad</div>
+          <div class="schema-desc">One squad per student</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">id</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">studentId</span><span class="field-type">text</span><span class="field-uniq">UNIQUE</span></div>
+        <div class="schema-field"><span class="field-name">slot1CharacterId</span><span class="field-type">text</span><span class="field-fk">FK</span></div>
+        <div class="schema-field"><span class="field-name">slot2CharacterId</span><span class="field-type">text</span><span class="field-fk">FK</span></div>
+        <div class="schema-field"><span class="field-name">slot3CharacterId</span><span class="field-type">text</span><span class="field-fk">FK</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(255,107,107,0.15);">❤️</div>
+        <div>
+          <div class="schema-name">user_health</div>
+          <div class="schema-desc">Global HP — persists across battles</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">studentId</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">currentHp</span><span class="field-type">int</span><span class="field-note">default 1000</span></div>
+        <div class="schema-field"><span class="field-name">maxHp</span><span class="field-type">int</span><span class="field-note">default 1000</span></div>
+        <div class="schema-field"><span class="field-name">shieldActive</span><span class="field-type">bool</span></div>
+        <div class="schema-field"><span class="field-name">shieldPotionExpiresAt</span><span class="field-type">timestamp?</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(67,233,123,0.15);">⭐</div>
+        <div>
+          <div class="schema-name">user_xp</div>
+          <div class="schema-desc">XP only — never spent</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">studentId</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">totalXp</span><span class="field-type">int</span><span class="field-note">only increments</span></div>
+        <div class="schema-field"><span class="field-name">updatedAt</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(168,237,234,0.15);">🗡️</div>
+        <div>
+          <div class="schema-name">battle</div>
+          <div class="schema-desc">Async battle record</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">id</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">attackerStudentId</span><span class="field-type">text</span></div>
+        <div class="schema-field"><span class="field-name">defenderStudentId</span><span class="field-type">text</span><span class="field-note">opponent (async)</span></div>
+        <div class="schema-field"><span class="field-name">status</span><span class="field-type">text</span><span class="field-note">IN_PROGRESS|WIN…</span></div>
+        <div class="schema-field"><span class="field-name">attackerHpSnapshot</span><span class="field-type">int</span><span class="field-note">locked at start</span></div>
+        <div class="schema-field"><span class="field-name">defenderHpSnapshot</span><span class="field-type">int</span><span class="field-note">locked at start</span></div>
+        <div class="schema-field"><span class="field-name">currentTurn / maxTurns</span><span class="field-type">int</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-icon" style="background:rgba(199,125,255,0.15);">📋</div>
+        <div>
+          <div class="schema-name">battle_turn</div>
+          <div class="schema-desc">One row per turn</div>
+        </div>
+      </div>
+      <div class="schema-fields">
+        <div class="schema-field"><span class="field-name">id</span><span class="field-type">text</span><span class="field-pk">PK</span></div>
+        <div class="schema-field"><span class="field-name">battleId</span><span class="field-type">text</span><span class="field-fk">FK</span></div>
+        <div class="schema-field"><span class="field-name">turnNumber</span><span class="field-type">int</span></div>
+        <div class="schema-field"><span class="field-name">attackerAction</span><span class="field-type">text</span><span class="field-note">ATTACK|BLOCK|WEAK</span></div>
+        <div class="schema-field"><span class="field-name">defenderAction</span><span class="field-type">text</span><span class="field-note">AI-generated</span></div>
+        <div class="schema-field"><span class="field-name">attackerDamageDealt</span><span class="field-type">int</span></div>
+        <div class="schema-field"><span class="field-name">isCritical</span><span class="field-type">bool</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SHOP -->
+<section id="shop">
+  <div class="section-label">Shop System</div>
+  <h2>Items & Effects</h2>
+  <p class="subtitle">Extends the existing <code style="color:var(--accent);">shop_item</code> table with new item types. All purchases deduct from <code style="color:var(--accent);">transaction_history</code>.</p>
+
+  <div class="shop-grid">
+    <div class="shop-item">
+      <span class="shop-emoji">🛡️</span>
+      <div class="shop-name">Shield</div>
+      <div class="shop-effect">Activates shieldActive on user_health. Blocks all incoming battle damage until consumed.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item">
+      <span class="shop-emoji">🧪</span>
+      <div class="shop-name">Shield Potion</div>
+      <div class="shop-effect">Temporary shield with expiry timestamp. Auto-expires after duration passes.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item">
+      <span class="shop-emoji">❤️‍🩹</span>
+      <div class="shop-name">Health Potion</div>
+      <div class="shop-effect">Restores HP to user_health. Only usable outside of battle (status check enforced).</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item" style="border-color:rgba(255,107,53,0.4)">
+      <span class="shop-emoji">📕</span>
+      <div class="shop-name">Fire Tome</div>
+      <div class="shop-effect">Levels up your Fire character (+50 HP, +10 DMG). Grants XP.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item" style="border-color:rgba(78,205,196,0.4)">
+      <span class="shop-emoji">📘</span>
+      <div class="shop-name">Water Tome</div>
+      <div class="shop-effect">Levels up your Water character. Max level 10 enforced.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item" style="border-color:rgba(149,224,108,0.4)">
+      <span class="shop-emoji">📗</span>
+      <div class="shop-name">Earth Tome</div>
+      <div class="shop-effect">Levels up your Earth character. Must own character first.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item" style="border-color:rgba(168,237,234,0.4)">
+      <span class="shop-emoji">📙</span>
+      <div class="shop-name">Air Tome</div>
+      <div class="shop-effect">Levels up your Air character. Awards XP alongside level up.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+    <div class="shop-item" style="border-color:rgba(247,151,30,0.4)">
+      <span class="shop-emoji">🥚</span>
+      <div class="shop-name">Character Egg</div>
+      <div class="shop-effect">Opens to reveal 1 random character. Awards bonus points if collection complete.</div>
+      <div class="shop-currency">💎 Points</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CHALLENGES -->
+<section>
+  <div class="section-label">Technical Challenges</div>
+  <h2>Key Problems & Solutions</h2>
+
+  <div class="challenge-grid">
+    <div class="challenge-card">
+      <span class="challenge-icon">🔒</span>
+      <div class="challenge-title">Concurrent Battle Prevention</div>
+      <div class="challenge-desc">Student double-taps "Start Battle" and two battles spawn simultaneously, corrupting HP state.</div>
+      <div class="solution-label">Solution</div>
+      <div class="solution-text"><code style="color:var(--accent);">BATTLE_LOCK</code> KV namespace. Set <code>BATTLE_LOCK[studentId] = battleId</code> at start. Check before every action. Clear on battle end.</div>
+    </div>
+    <div class="challenge-card">
+      <span class="challenge-icon">🎲</span>
+      <div class="challenge-title">No-Duplicate Egg Characters</div>
+      <div class="challenge-desc">Egg system must never award a character the student already owns.</div>
+      <div class="solution-label">Solution</div>
+      <div class="solution-text">EggService queries owned characterIds first. Random picks from the remainder set. Fallback to bonus points if all 6 owned.</div>
+    </div>
+    <div class="challenge-card">
+      <span class="challenge-icon">📸</span>
+      <div class="challenge-title">Async Opponent Consistency</div>
+      <div class="challenge-desc">Opponent student changes their squad mid-battle, changing the difficulty mid-fight.</div>
+      <div class="solution-label">Solution</div>
+      <div class="solution-text">Snapshot opponent squad stats into <code>battle.defenderHpSnapshot</code> at <code>startBattle</code>. Live changes never touch an ongoing battle.</div>
+    </div>
+    <div class="challenge-card">
+      <span class="challenge-icon">⭐</span>
+      <div class="challenge-title">XP vs Points Isolation</div>
+      <div class="challenge-desc">Two currency systems that must never interfere. XP only levels, Points only spend.</div>
+      <div class="solution-label">Solution</div>
+      <div class="solution-text">Completely separate tables (<code>user_xp</code> vs <code>transaction_history</code>) and separate services. No shared code paths between the two.</div>
+    </div>
+    <div class="challenge-card">
+      <span class="challenge-icon">⚡</span>
+      <div class="challenge-title">D1 CPU Time Limits</div>
+      <div class="challenge-desc">Cloudflare Workers have ~50ms CPU budget. Complex battle turns risk timeout.</div>
+      <div class="solution-label">Solution</div>
+      <div class="solution-text">Max 5 DB operations per <code>submitAction</code> call. Use JOINs, not N+1. Battle engine is pure TypeScript — zero I/O in resolution logic.</div>
+    </div>
+    <div class="challenge-card">
+      <span class="challenge-icon">🛡️</span>
+      <div class="challenge-title">Shield Item Timing</div>
+      <div class="challenge-desc">Shield must block damage from async battles that happen while the student is offline.</div>
+      <div class="solution-label">Solution</div>
+      <div class="solution-text"><code>UserHealthService.applyDamage()</code> reads <code>shieldActive</code> flag before reducing HP. Shield consumed after battle ends. Potion uses timestamp expiry check.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PHASES -->
+<section id="phases">
+  <div class="section-label">Implementation</div>
+  <h2>5 Phases</h2>
+  <p class="subtitle">Incremental delivery — each phase is independently deployable and testable.</p>
+
+  <div class="phases">
+    <div class="phase-card">
+      <div class="phase-title">Core Infrastructure</div>
+      <ul class="phase-items">
+        <li>DB schemas for characters, health, XP</li>
+        <li>Seed 6 characters at deploy time</li>
+        <li>CharacterStatsService (pure, testable)</li>
+        <li>UserHealthService</li>
+        <li>GraphQL: myCharacters, myHealth</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="phase-title">Egg + Squad</div>
+      <ul class="phase-items">
+        <li>character_egg schema</li>
+        <li>user_squad schema</li>
+        <li>EggService (no-duplicate logic)</li>
+        <li>SquadService (3-char validation)</li>
+        <li>GraphQL: openEgg, setSquad</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="phase-title">Battle Engine</div>
+      <ul class="phase-items">
+        <li>battle + battle_turn schemas</li>
+        <li>ActionResolverService (RPS table)</li>
+        <li>AiOpponentService (weighted random)</li>
+        <li>BattleEngineService (orchestration)</li>
+        <li>KV lock integration</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="phase-title">Shop Items</div>
+      <ul class="phase-items">
+        <li>Extend shop_item with new types</li>
+        <li>useItem mutation</li>
+        <li>Shield integration in HealthService</li>
+        <li>Tome → level up + XP grant</li>
+        <li>Egg as purchasable item</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="phase-title">Frontend</div>
+      <ul class="phase-items">
+        <li>/characters collection page</li>
+        <li>/egg opening animation</li>
+        <li>/squad builder (slot drag-pick)</li>
+        <li>/battle arena + action buttons</li>
+        <li>Turn log + HP bars</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FOLDER STRUCTURE -->
+<section>
+  <div class="section-label">Folder Structure</div>
+  <h2>Service File Layout</h2>
+  <p class="subtitle">Follows existing sprout-lab-service conventions exactly — same patterns, same naming.</p>
+
+  <div class="card-grid card-grid-2">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-label" style="margin-bottom:12px;">sprout-lab-service/src/</div>
+        <div class="code-block" style="font-size:12px; line-height:2;">
+db/<br>
+&nbsp;&nbsp;<span class="c">character/</span>  character.schema.ts<br>
+&nbsp;&nbsp;<span class="c">character/</span>  user-character.schema.ts<br>
+&nbsp;&nbsp;<span class="c">battle/</span>     battle.schema.ts<br>
+&nbsp;&nbsp;<span class="c">battle/</span>     battle-turn.schema.ts<br>
+&nbsp;&nbsp;<span class="c">squad/</span>      user-squad.schema.ts<br>
+&nbsp;&nbsp;<span class="c">egg/</span>        character-egg.schema.ts<br>
+&nbsp;&nbsp;<span class="c">user-health/</span> user-health.schema.ts<br>
+&nbsp;&nbsp;<span class="c">user-health/</span> user-xp.schema.ts
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:12px;">services/</div>
+        <div class="code-block" style="font-size:12px; line-height:2;">
+<span class="c">battle/</span>    battle-engine.service.ts<br>
+<span class="c">battle/</span>    action-resolver.service.ts<br>
+<span class="c">battle/</span>    ai-opponent.service.ts<br>
+<span class="c">character/</span> character-stats.service.ts<br>
+<span class="c">character/</span> egg.service.ts<br>
+<span class="c">squad/</span>     squad.service.ts<br>
+<span class="c">user-health/</span> user-health.service.ts
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-label" style="margin-bottom:12px;">graphql/schemas/</div>
+        <div class="code-block" style="font-size:12px; line-height:2;">
+character.schema.ts<br>
+battle.schema.ts<br>
+squad.schema.ts<br>
+egg.schema.ts
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:12px;">graphql/resolvers/</div>
+        <div class="code-block" style="font-size:12px; line-height:2;">
+<span class="c">queries/character/</span>  get-my-characters.ts<br>
+<span class="c">queries/battle/</span>     get-battle.ts<br>
+<span class="c">queries/squad/</span>      get-my-squad.ts<br>
+<span class="c">mutations/battle/</span>   start-battle.ts<br>
+<span class="c">mutations/battle/</span>   submit-action.ts<br>
+<span class="c">mutations/battle/</span>   claim-battle-reward.ts<br>
+<span class="c">mutations/egg/</span>      open-egg.ts<br>
+<span class="c">mutations/squad/</span>    set-squad.ts<br>
+<span class="c">mutations/shop/</span>     use-item.ts
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div style="margin-bottom:8px; font-weight:700; color:var(--text);">Sprout Lab — Battle System Architecture</div>
+  <div>Cloudflare Workers · Apollo GraphQL · Drizzle D1 · Next.js 14</div>
+</footer>
+
+</body>
+</html>
