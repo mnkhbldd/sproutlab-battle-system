@@ -49,9 +49,9 @@ Async, turn-based battle system for students. Inspired by Dragon City.
 ```ts
 // Static definitions — 6 characters, seeded at deploy time
 export const character = sqliteTable('character', {
-  id: text('id').primaryKey(),          // e.g. 'char_fire'
+  id: text('id').primaryKey(),          // e.g. 'char_knight'
   name: text('name').notNull(),
-  type: text('type').notNull(),         // FIRE | WATER | EARTH | AIR | LIGHT | DARK
+  type: text('type').notNull(),         // KNIGHT | NINJA | MAGE | BERSERKER | PALADIN | RANGER
   baseHp: int('base_hp').notNull(),     // e.g. 500
   baseDamage: int('base_damage').notNull(), // e.g. 80
   spriteUrl: text('sprite_url'),
@@ -342,7 +342,7 @@ type CharacterEgg { id: ID!, isOpened: Boolean!, awardedCharacter: Character }
 
 enum BattleAction { ATTACK, BLOCK, WEAK_ATTACK }
 enum BattleStatus { IN_PROGRESS, WIN, LOSE, DRAW }
-enum CharacterType { FIRE, WATER, EARTH, AIR, LIGHT, DARK }
+enum CharacterType { KNIGHT, NINJA, MAGE, BERSERKER, PALADIN, RANGER }
 ```
 
 ### Queries
