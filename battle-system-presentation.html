@@ -952,9 +952,9 @@
     <div class="arch-layer arch-frontend">
       <span class="arch-layer-label">Clients</span>
       <div class="arch-routes">
-        <span class="arch-route">sprout-lab-web</span>
-        <span class="arch-route">sprout-lab-dash</span>
-        <span class="arch-route">/army · /arena · /shop</span>
+        <span class="arch-route">sprout-lab-web · sprout-lab-dash</span>
+        <span class="arch-route">/characters · /spin · /squad · /battle · /battle/[id] · /shop</span>
+        <span class="arch-route">/army · /arena (aliases)</span>
         <span class="arch-route">JWT / Clerk</span>
       </div>
     </div>
@@ -969,9 +969,10 @@
         <span class="arch-service">Damage / Stats</span>
         <span class="arch-service">AiOpponentService</span>
         <span class="arch-service">PlayStyle + async resolver</span>
-        <span class="arch-service">Acquisition (spin + egg)</span>
+        <span class="arch-service">AcquisitionService (spin + shop)</span>
+        <span class="arch-service">Champion stats · SquadService</span>
         <span class="arch-service">Economy / inventory</span>
-        <span class="arch-service">Hp-manager</span>
+        <span class="arch-service">UserHealthService · hp-manager</span>
       </div>
     </div>
 
@@ -980,7 +981,7 @@
     <div class="arch-layer arch-db">
       <span class="arch-layer-label">Data &amp; edge assets</span>
       <div class="arch-routes">
-        <span class="arch-route" style="color: var(--accent4);">D1: champions, battles, economy</span>
+        <span class="arch-route" style="color: var(--accent4);">D1: champion_template, champion_instance, user_squad, battle, battle_turn, user_health, user_xp, inventory…</span>
         <span class="arch-route" style="color: var(--accent4);">KV: BATTLE_LOCK, caches</span>
         <span class="arch-route" style="color: var(--accent4);">R2: sprite sheets</span>
         <span class="arch-route" style="color: var(--accent4);">Queues: raids, notify</span>
@@ -1010,7 +1011,7 @@
 <section id="characters">
   <div class="section-label">Champion system</div>
   <h2>Templates, instances &amp; collection</h2>
-  <p class="subtitle">Canonical model: <strong>champion_template</strong> (static, many rows, R2 animations) + <strong>champion_instance</strong> (per student). Below: six <em>starter</em> class archetypes (Champion Arena–style roster from the presentation deck) — seed as many templates as product needs. Acquisition: <strong>spin ticket</strong> and/or <strong>egg</strong> share one <strong>AcquisitionService.grantRandomUnownedTemplate</strong>. API enum uses <strong>DEFEND</strong>; UI may label it “Block”.</p>
+  <p class="subtitle">Canonical model: <strong>champion_template</strong> (static, many rows, R2 animations) + <strong>champion_instance</strong> (per student). Below: six <em>starter</em> class archetypes (Champion Arena–style roster from the presentation deck) — seed as many templates as product needs. Acquisition: <strong>spin</strong> and <strong>shop grants</strong> (e.g. purchasable <strong>SPIN_TICKET</strong>) share one <strong>AcquisitionService.grantRandomUnownedTemplate</strong> — no duplicates per student. API enum uses <strong>DEFEND</strong>; UI may label it “Block”.</p>
 
   <div class="char-grid">
     <div class="char-card knight">
@@ -1079,7 +1080,7 @@
         </div>
       </div>
       <div>
-        <div class="section-label" style="margin-bottom:12px;">Acquisition (egg + spin)</div>
+        <div class="section-label" style="margin-bottom:12px;">Acquisition (spin + shop · no-duplicate)</div>
         <div class="flow-steps" style="margin-top:0;">
           <div class="flow-step">
             <div class="flow-num">1</div>
@@ -1092,7 +1093,7 @@
             <div class="flow-num">2</div>
             <div class="flow-content" style="padding-bottom:16px;">
               <div class="flow-title" style="font-size:14px;">Random unowned</div>
-              <div class="flow-desc">Spin: rarity weights. Egg: uniform over remainder. Log in <code>inventory_log</code></div>
+              <div class="flow-desc">Spin: rarity weights; shop ticket uses same unowned pool. Log in <code>inventory_log</code></div>
             </div>
           </div>
           <div class="flow-step">
@@ -1346,7 +1347,7 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
 <section id="database">
   <div class="section-label">Database Design</div>
   <h2>Unified schema (D1 + Drizzle)</h2>
-  <p class="subtitle">Use <strong>champion_*</strong> naming in TypeScript / GraphQL. Legacy <code>character</code> / <code>user_character</code> can migrate to template/instance. Extend with economy, async metadata, and optional MVP bridge tables as needed.</p>
+  <p class="subtitle">~7 core tables on Cloudflare D1 (SQLite); use <strong>champion_*</strong> naming in TypeScript / GraphQL. Legacy <code>character</code> / <code>user_character</code> can migrate to template/instance. Existing <code style="color:var(--accent);">inventory_item</code> / shop ledger extended for <strong>SPIN_TICKET</strong> and consumables. All IDs UUID text unless noted.</p>
 
   <div class="card-grid card-grid-2" style="gap:16px;">
 
@@ -1483,13 +1484,13 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
       <div class="schema-header">
         <div class="schema-icon" style="background:rgba(67,233,123,0.15);">⭐</div>
         <div>
-          <div class="schema-name">user_xp · eggs</div>
-          <div class="schema-desc">XP aggregate; character_egg if eggs kept</div>
+          <div class="schema-name">user_xp</div>
+          <div class="schema-desc">XP aggregate; spin tickets live in inventory_item</div>
         </div>
       </div>
       <div class="schema-fields">
         <div class="schema-field"><span class="field-name">user_xp.total_xp</span><span class="field-type">int</span></div>
-        <div class="schema-field"><span class="field-name">character_egg</span><span class="field-type">optional</span><span class="field-note">same as spin pool</span></div>
+        <div class="schema-field"><span class="field-name">SPIN_TICKET</span><span class="field-type">inventory</span><span class="field-note">same grant path as free spin</span></div>
       </div>
     </div>
 
@@ -1548,9 +1549,9 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
       <div class="shop-currency">💎 Points</div>
     </div>
     <div class="shop-item" style="border-color:rgba(247,151,30,0.4)">
-      <span class="shop-emoji">🥚</span>
-      <div class="shop-name">Character Egg</div>
-      <div class="shop-effect">Opens → <strong>AcquisitionService</strong> grants random unowned template (same as spin).</div>
+      <span class="shop-emoji">🎫</span>
+      <div class="shop-name">Spin Ticket</div>
+      <div class="shop-effect">Consumes ticket; <strong>AcquisitionService</strong> grants one random unowned <code>champion_template</code> / instance (or bonus points if pool empty — same rules as free spin).</div>
       <div class="shop-currency">💎 Points</div>
     </div>
   </div>
@@ -1573,10 +1574,10 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
     </div>
     <div class="challenge-card">
       <span class="challenge-icon">🎲</span>
-      <div class="challenge-title">No-Duplicate Egg Characters</div>
-      <div class="challenge-desc">Egg system must never award a character the student already owns.</div>
+      <div class="challenge-title">No-Duplicate Character Grants</div>
+      <div class="challenge-desc">Spin and shop grants must never award a character the student already owns.</div>
       <div class="solution-label">Solution</div>
-      <div class="solution-text"><strong>AcquisitionService</strong>: exclude owned template IDs; grant next unowned <code>champion_instance</code>. Fallback to bonus currency if pool empty (not only “6”).</div>
+      <div class="solution-text"><strong>AcquisitionService</strong>: load owned <code>template_id</code>s; random pick from the unowned set (weighted for spin). Create <code>champion_instance</code>; fallback to bonus currency if the pool is empty (roster can be &gt;6 templates).</div>
     </div>
     <div class="challenge-card">
       <span class="challenge-icon">📸</span>
@@ -1635,11 +1636,12 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
       </ul>
     </div>
     <div class="phase-card">
-      <div class="phase-title">Acquisition</div>
+      <div class="phase-title">Acquisition + Squad</div>
       <ul class="phase-items">
-        <li>AcquisitionService — spin + egg, no-dupe</li>
-        <li>inventory_item / inventory_log wiring</li>
-        <li>GraphQL: spinWheel, openEgg / acquireChampion</li>
+        <li><code>SPIN_TICKET</code> · inventory_item / inventory_log wiring</li>
+        <li>AcquisitionService — spin + shop grants, no-duplicate</li>
+        <li>SquadService (3-slot validation) · user_squad</li>
+        <li>GraphQL: spinWheel, setSquad / setSquadRole</li>
       </ul>
     </div>
     <div class="phase-card">
@@ -1662,6 +1664,10 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
       <div class="phase-title">Economy UI</div>
       <ul class="phase-items">
         <li>Shop + purchaseItem, useItem, giftItem</li>
+        <li>Extend shop_item (SPIN_TICKET, tomes, shields)</li>
+        <li>Spin tickets as purchasable items</li>
+        <li>Tome → level up + XP grant</li>
+        <li>Shield / <code>shield_until</code> via hp-manager · UserHealthService</li>
         <li>Transaction history view</li>
       </ul>
     </div>
@@ -1675,8 +1681,9 @@ WEAK_ATTACK: <span class="num">30</span>%<br>
     <div class="phase-card">
       <div class="phase-title">Frontend</div>
       <ul class="phase-items">
-        <li>Army, spin/egg, squad, arena, replay</li>
-        <li>BattleArena, TurnLog, shop (dash + web)</li>
+        <li>Army · <code>/characters</code> · <code>/spin</code> (wheel + grant reveal) · squad · arena</li>
+        <li><code>/battle</code> + actions · Turn log · HP bars</li>
+        <li>BattleArena, TurnLog, shop (dash + web); async replay where applicable</li>
       </ul>
     </div>
   </div>
@@ -1703,8 +1710,7 @@ db/<br>
 &nbsp;&nbsp;<span class="c">battle/</span>   play-style.schema.ts<br>
 &nbsp;&nbsp;<span class="c">squad/</span>    user-squad.schema.ts<br>
 &nbsp;&nbsp;<span class="c">economy/</span>  inventory-*.schema.ts, coin-transaction.schema.ts<br>
-&nbsp;&nbsp;<span class="c">egg/</span>      character-egg.schema.ts <span class="c">(optional)</span><br>
-&nbsp;&nbsp;<span class="c">user-health/</span> user-health.schema.ts <span class="c">(MVP bridge)</span>
+&nbsp;&nbsp;<span class="c">user-health/</span> user-health.schema.ts, user-xp.schema.ts <span class="c">(MVP bridge)</span>
         </div>
       </div>
       <div class="card">
@@ -1712,10 +1718,11 @@ db/<br>
         <div class="code-block" style="font-size:12px; line-height:2;">
 <span class="c">battle/</span> battle-engine · action-resolver · ai-opponent<br>
 <span class="c">battle/</span> play-style-learner · async-battle-resolver<br>
-<span class="c">champion/</span> stats · acquisition (spin+egg)<br>
+<span class="c">champion/</span> stats · acquisition.service (spin + shop)<br>
 <span class="c">squad/</span>    squad.service.ts<br>
 <span class="c">economy/</span> coin-service · inventory<br>
 <span class="c">hp-manager/</span> hp-manager.service.ts<br>
+<span class="c">user-health/</span> user-health.service.ts<br>
 <span class="c">cron/</span>     battle-resolver, raid, hp-regen, …
         </div>
       </div>
@@ -1727,7 +1734,7 @@ db/<br>
 champion.schema.ts<br>
 battle.schema.ts<br>
 economy.schema.ts<br>
-squad.schema.ts · egg.schema.ts
+squad.schema.ts · acquisition.schema.ts <span class="c">(spin + inventory)</span>
         </div>
       </div>
       <div class="card">
@@ -1735,10 +1742,10 @@ squad.schema.ts · egg.schema.ts
         <div class="code-block" style="font-size:12px; line-height:2;">
 <span class="c">queries/champion/</span>  myChampions · templates<br>
 <span class="c">queries/battle/</span>    myBattle · battleReplay · history<br>
+<span class="c">queries/squad/</span>     getMySquad <span class="c">(or champion squad queries)</span><br>
 <span class="c">mutations/battle/</span>  startBattle · submitBattleAction · startDuel…<br>
 <span class="c">mutations/champion/</span> spinWheel · setSquadRole<br>
-<span class="c">mutations/economy/</span> purchaseItem · useItem · giftItem<br>
-<span class="c">mutations/egg/</span>     openEgg <span class="c">(optional)</span>
+<span class="c">mutations/economy/</span> purchaseItem · useItem · giftItem
         </div>
       </div>
     </div>
